@@ -1,0 +1,362 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Admin Panel — SwiggyClone</title>
+  
+  <script>
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+        alert("Authentication Required: Please log in to access the dashboard");
+        window.location.href = '/Home'; 
+    }
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  
+  <style>
+    :root {
+      --orange:#FF6B35; --orange-dark:#e85520; --yellow:#FFD166;
+      --bg:#0d0d0d; --card:#161616; --card2:#1c1c1c; --border:#252525;
+      --text:#f0f0f0; --muted:#777; --green:#06D6A0; --red:#EF233C; --blue:#4CC9F0;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; display:flex; }
+
+    /* SIDEBAR */
+    .sidebar {
+      width: 230px; min-height:100vh;
+      background:var(--card); border-right:1px solid var(--border);
+      display:flex; flex-direction:column; padding:1.5rem 1rem; position:sticky; top:0;
+      flex-shrink:0;
+    }
+    .sidebar-logo { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:800;
+      color:var(--orange); padding:.5rem; margin-bottom:2rem; }
+    .sidebar-logo span { color:var(--text); }
+    .sidebar-label { font-size:.7rem; font-weight:600; color:var(--muted); letter-spacing:1px;
+      text-transform:uppercase; padding:.5rem; margin-bottom:.5rem; }
+    .nav-item { display:flex; align-items:center; gap:.7rem; padding:.7rem 1rem;
+      border-radius:10px; cursor:pointer; font-size:.88rem; color:var(--muted);
+      transition:all .2s; margin-bottom:.2rem; }
+    .nav-item:hover { background:rgba(255,107,53,.1); color:var(--orange); }
+    .nav-item.active { background:rgba(255,107,53,.15); color:var(--orange); font-weight:500; }
+    
+    .sidebar-footer { margin-top:auto; padding-top: 1rem; border-top: 1px solid var(--border); }
+    .sidebar-footer a, .sidebar-footer button { 
+      display:block; font-size:.82rem; color:var(--muted); text-decoration:none;
+      padding:.6rem 1rem; border-radius:8px; width: 100%; text-align: left;
+      background: none; border: none; cursor: pointer; font-family: inherit;
+    }
+    .sidebar-footer a:hover { color:var(--text); background: var(--border); }
+    .logout-btn { color: var(--red) !important; font-weight: 600; }
+    .logout-btn:hover { background: rgba(239,35,60,0.1) !important; }
+
+    /* MAIN & OTHER STYLES (Keeping your existing styles) */
+    .main { flex:1; min-width:0; }
+    .topbar { display:flex; align-items:center; justify-content:space-between;
+      padding:1.2rem 2rem; border-bottom:1px solid var(--border);
+      background:rgba(13,13,13,.9); position:sticky; top:0; z-index:50; backdrop-filter:blur(14px); }
+    .topbar-title { font-family:'Syne',sans-serif; font-size:1.2rem; font-weight:700; }
+    .admin-badge { padding:.3rem .9rem; background:rgba(255,107,53,.15); color:var(--orange);
+      border:1px solid rgba(255,107,53,.3); border-radius:100px; font-size:.78rem; font-weight:600; }
+    .content { padding:2rem; }
+
+    /* STATS, PANELS, TABLE STYLES... (Keep as is) */
+    .stats-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:1rem; margin-bottom:2rem; }
+    .stat-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1.4rem; position:relative; overflow:hidden; }
+    .stat-ico { font-size:1.5rem; margin-bottom:.7rem; }
+    .stat-val { font-family:'Syne',sans-serif; font-size:2rem; font-weight:800; }
+    .stat-val.orange { color:var(--orange); }
+    .stat-val.green { color:var(--green); }
+    .stat-val.blue { color:var(--blue); }
+    .stat-val.yellow { color:var(--yellow); }
+    .stat-label { font-size:.78rem; color:var(--muted); margin-top:.2rem; }
+
+    .panels { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:2rem; }
+    .panel { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:1.8rem; }
+    .panel h3 { font-family:'Syne',sans-serif; font-size:1rem; font-weight:700; margin-bottom:1.2rem; }
+
+    label { display:block; font-size:.8rem; color:var(--muted); margin-bottom:.35rem; font-weight:500; }
+    input { width:100%; padding:.7rem 1rem; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); margin-bottom:.9rem; outline:none; }
+    input:focus { border-color:var(--orange); }
+
+    .btn { padding:.7rem 1.5rem; border-radius:10px; border:none; font-family:'Syne',sans-serif; font-size:.88rem; font-weight:600; cursor:pointer; transition:all .2s; }
+    .btn-primary { background:var(--orange); color:white; }
+    .btn-full { width:100%; }
+
+    .msg { padding:.7rem 1rem; border-radius:9px; font-size:.82rem; margin-top:.7rem; }
+    .msg.success { background:rgba(6,214,160,.12); color:var(--green); border:1px solid rgba(6,214,160,.3); }
+    .msg.error { background:rgba(239,35,60,.12); color:var(--red); border:1px solid rgba(239,35,60,.3); }
+    .hidden { display:none !important; }
+
+    .assign-full { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:1.8rem; margin-bottom:2rem; }
+    .assign-row { display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end; }
+    .assign-row .field { flex:1; min-width:130px; }
+
+    .badge { display:inline-flex; align-items:center; gap:.4rem; padding:.25rem .7rem; border-radius:100px; font-size:.72rem; font-weight:600; }
+    .badge-orange { background:rgba(255,107,53,.15); color:var(--orange); border:1px solid rgba(255,107,53,.25); }
+    .badge-green { background:rgba(6,214,160,.15); color:var(--green); border:1px solid rgba(6,214,160,.25); }
+    .badge-blue { background:rgba(76,201,240,.15); color:var(--blue); border:1px solid rgba(76,201,240,.25); }
+    
+    .inventory-card { background: var(--card); border: 1px solid var(--border); border-radius: 18px; padding: 1.8rem; margin-top: 2rem; margin-bottom: 3rem; }
+    .inventory-table { width: 100%; border-collapse: separate; border-spacing: 0 8px; text-align: left; }
+    .inventory-table th { background: var(--bg); color: var(--muted); padding: 12px; text-transform: uppercase; font-size: 0.8rem; }
+    .inventory-table td { padding: 15px 12px; background: var(--card2); border-bottom: 1px solid var(--border); color: var(--text); font-size: 0.95rem; }
+  </style>
+</head>
+<body>
+
+ <aside class="sidebar">
+  <div class="sidebar-logo">Swiggy<span> Clone</span></div>
+  <div class="sidebar-label">Management</div>
+  
+  <div class="nav-item active" onclick="scrollTo('sec-restaurant', event)">🛡️ Admin</div>
+  
+  <div class="nav-item" onclick="secureJump('/Customer')">🍔 Food Items</div>
+  
+  <div class="nav-item" onclick="secureJump('/Delivery')">🛵 Delivery </div>
+  
+  <div class="sidebar-footer">
+    <a href="/Home">🏠 Back to Home</a>
+    <button onclick="logout()" class="logout-btn">🚪 Logout Admin</button>
+  </div>
+</aside>
+
+  <div class="main">
+    <div class="topbar">
+      <div class="topbar-title">🛡️ Admin Dashboard</div>
+      <div class="admin-badge">Admin Access</div>
+    </div>
+
+    <div class="content">
+      <div class="stats-grid">
+        <div class="stat-card orange">
+          <div class="stat-ico">🏠</div>
+          <div class="stat-val orange" id="stat-rest">—</div>
+          <div class="stat-label">Restaurants</div>
+        </div>
+        <div class="stat-card green">
+          <div class="stat-ico">🍔</div>
+          <div class="stat-val green" id="stat-food">—</div>
+          <div class="stat-label">Food Items</div>
+        </div>
+        <div class="stat-card blue">
+          <div class="stat-ico">📦</div>
+          <div class="stat-val blue" id="stat-active-orders">—</div>
+          <div class="stat-label">Active Orders</div>
+        </div>
+        <div class="stat-card yellow">
+          <div class="stat-ico">🛵</div>
+          <div class="stat-val yellow" id="stat-partners">2</div>
+          <div class="stat-label">Delivery Partners</div>
+        </div>
+      </div>
+
+      <div class="panels">
+        <div class="panel" id="sec-restaurant">
+          <h3>🏠 Add Restaurant</h3>
+          <label>Restaurant Name</label>
+          <input type="text" id="rest-name" placeholder="e.g. Burger Palace"/>
+          <label>Location</label>
+          <input type="text" id="rest-location" placeholder="e.g. Chennai"/>
+          <button class="btn btn-primary btn-full" onclick="addRestaurant()">Add Restaurant →</button>
+          <div id="rest-msg" class="msg hidden"></div>
+        </div>
+
+        <div class="panel" id="sec-food">
+          <h3>🍔 Add Food Item</h3>
+          <label>Food Name</label>
+          <input type="text" id="food-name" placeholder="e.g. Chicken Burger"/>
+          <label>Price (₹)</label>
+          <input type="number" id="food-price" placeholder="e.g. 199"/>
+          <label>Restaurant ID</label>
+          <input type="number" id="food-rest-id" placeholder="Restaurant ID"/>
+          <button class="btn btn-primary btn-full" onclick="addFood()">Add Food Item →</button>
+          <div id="food-msg" class="msg hidden"></div>
+        </div>
+      </div>
+
+      <div class="assign-full" id="sec-assign">
+        <h3>🛵 Assign Partner</h3>
+        <div class="assign-row">
+          <div class="field">
+            <label>Order ID</label>
+            <input type="number" id="assign-order" placeholder="ID"/>
+          </div>
+          <div class="field">
+            <label>Partner ID</label>
+            <input type="number" id="assign-partner" placeholder="ID"/>
+          </div>
+          <button class="btn btn-primary" onclick="assignDelivery()">Assign →</button>
+        </div>
+        <div id="assign-msg" class="msg hidden"></div>
+      </div>
+
+      <div class="inventory-card">
+          <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+              <h3 style="margin:0;">📋 Inventory & Orders</h3>
+              <div style="display:flex; gap:10px;">
+                  <button class="btn btn-blue" onclick="listRestaurants()">🏢 Restaurants</button>
+                  <button class="btn btn-green" onclick="listFoods()">🍕 Foods</button>
+                  <button class="btn btn-orange" onclick="listOrders()">📦 Orders</button>
+              </div>
+          </div>
+          <div id="inventory-list" style="max-height: 400px; overflow-y: auto;">
+              <p style="text-align:center; color:var(--muted);">Click a button to load data</p>
+          </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const BASE = 'http://localhost:8080/admin';
+
+    function logout() {
+        localStorage.removeItem('isLoggedIn');
+        localStorage.removeItem('userRole');
+        window.location.href = '/Home';
+    }
+
+    function scrollTo(targetId, e) {
+        if(e) e.preventDefault();
+        const target = document.getElementById(targetId);
+        if (target) {
+            window.scrollTo({ top: target.offsetTop - 90, behavior: 'smooth' });
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+            if(e) e.currentTarget.classList.add('active');
+        }
+    }
+
+    function showMsg(id, text, type) {
+      const el = document.getElementById(id);
+      el.textContent = text; el.className = `msg ${type}`;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 4000);
+    }
+
+ // Sidebar navigation function
+    function secureJump(page) {
+        if (localStorage.getItem('isLoggedIn') === 'true') {
+            // Inga "customer.html" vandha "/Customer" nu maara-num
+            const professionalPath = page.replace('.html', '');
+            window.location.href = professionalPath.startsWith('/') ? professionalPath : '/' + professionalPath;
+        } else {
+            window.location.href = '/Home';
+        }
+    }
+
+    // --- API CALLS ---
+    async function addRestaurant() {
+      const name = document.getElementById('rest-name').value.trim();
+      const location = document.getElementById('rest-location').value.trim();
+      if (!name || !location) return showMsg('rest-msg','Fill all fields','error');
+      try {
+        const res = await fetch(`${BASE}/restaurant`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({name, location})
+        });
+        if (res.ok) {
+          showMsg('rest-msg', `✅ Restaurant added!`, 'success');
+          updateStats();
+        }
+      } catch(e) { showMsg('rest-msg','Server error','error'); }
+    }
+
+    async function addFood() {
+      const name = document.getElementById('food-name').value.trim();
+      const price = parseFloat(document.getElementById('food-price').value);
+      const restId = parseInt(document.getElementById('food-rest-id').value);
+      try {
+        const res = await fetch(`${BASE}/food`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify({name, price, resuturant:{id:restId}})
+        });
+        if (res.ok) {
+          showMsg('food-msg', `✅ Food added!`, 'success');
+          updateStats();
+        }
+      } catch(e) { showMsg('food-msg','Server error','error'); }
+    }
+
+    async function assignDelivery() {
+      const orderId = document.getElementById('assign-order').value;
+      const partnerId = document.getElementById('assign-partner').value;
+      try {
+        const res = await fetch(`${BASE}/assign/${orderId}/${partnerId}`, { method: 'PUT' });
+        if (res.ok) {
+          showMsg('assign-msg', `✅ Order #${orderId} Assigned!`, 'success');
+          listOrders();
+          updateStats();
+        }
+      } catch(e) { showMsg('assign-msg','Server error','error'); }
+    }
+
+    async function updateStats() {
+    	  try {
+    	    // Food Stats
+    	    const resFood = await fetch(`${BASE}/foods`);
+    	    const foods = await resFood.json();
+    	    document.getElementById('stat-food').textContent = foods.length;
+    	    
+    	    // Orders Stats
+    	    const resOrders = await fetch(`${BASE}/orders`);
+    	    const orders = await resOrders.json();
+    	    document.getElementById('stat-active-orders').textContent = orders.filter(o => o.status !== 'DELIVERED').length;
+    	    
+    	    // Restaurant Stats
+    	    const rests = [...new Set(foods.map(f => f.resuturant?.id).filter(Boolean))];
+    	    document.getElementById('stat-rest').textContent = rests.length;
+
+    	    // --- DYNAMIC PARTNER COUNT FIX ---
+    	    // Backend-la ippo potta endpoint-ah fetch panrom
+    	    const resPartners = await fetch(`${BASE}/partners`); 
+    	    const partners = await resPartners.json();
+    	    
+    	    // DB-la ethana per irukaangalo andha count automatic-aa inga vandhudum!
+    	    document.getElementById('stat-partners').textContent = partners.length;
+
+    	  } catch(e) { 
+    	    console.error("Stats load error mapla:", e); 
+    	  }
+    	}
+
+    async function listRestaurants() {
+        const listDiv = document.getElementById('inventory-list');
+        try {
+            const res = await fetch(`${BASE}/restaurants`);
+            const rests = await res.json();
+            let html = '<table class="inventory-table"><thead><tr><th>ID</th><th>Name</th><th>Location</th></tr></thead><tbody>';
+            rests.forEach(r => html += `<tr><td>#${r.id}</td><td>${r.name}</td><td>📍 ${r.location}</td></tr>`);
+            listDiv.innerHTML = html + '</tbody></table>';
+        } catch(e) { listDiv.innerHTML = 'Error loading data'; }
+    }
+
+    async function listFoods() {
+        const listDiv = document.getElementById('inventory-list');
+        try {
+            const res = await fetch(`${BASE}/foods`);
+            const foods = await res.json();
+            let html = '<table class="inventory-table"><thead><tr><th>ID</th><th>Food</th><th>Price</th><th>Rest.</th></tr></thead><tbody>';
+            foods.forEach(f => html += `<tr><td>#${f.id}</td><td>${f.name}</td><td>₹${f.price}</td><td>🏠 ${f.resuturant?.name || 'N/A'}</td></tr>`);
+            listDiv.innerHTML = html + '</tbody></table>';
+        } catch(e) { listDiv.innerHTML = 'Error loading data'; }
+    }
+
+    async function listOrders() {
+        const listDiv = document.getElementById('inventory-list');
+        try {
+            const res = await fetch(`${BASE}/orders`);
+            const orders = await res.json();
+            let html = '<table class="inventory-table"><thead><tr><th>Order ID</th><th>Status</th><th>Partner</th></tr></thead><tbody>';
+            orders.forEach(o => {
+                let cls = o.status === 'DELIVERED' ? 'badge-green' : (o.status === 'OUT_FOR_DELIVERY' ? 'badge-blue' : 'badge-orange');
+                html += `<tr><td>#${o.id}</td><td><span class="badge ${cls}">${o.status}</span></td><td>${o.deliveryPartner?.name || 'Not Assigned'}</td></tr>`;
+            });
+            listDiv.innerHTML = html + '</tbody></table>';
+        } catch(e) { listDiv.innerHTML = 'Error loading data'; }
+    }
+    
+    updateStats();
+  </script>
+</body>
+</html>

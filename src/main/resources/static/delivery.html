@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Delivery Partner — SwiggyClone</title>
+
+  <script>
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+        alert("Authentication Required: Please log in to access the dashboard");
+        window.location.href = '/Home'; 
+    }
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  
+  <style>
+    :root {
+      --orange:#FF6B35; --orange-dark:#e85520; --yellow:#FFD166;
+      --bg:#0d0d0d; --card:#161616; --border:#252525;
+      --text:#f0f0f0; --muted:#777; --green:#06D6A0; --red:#EF233C; --blue:#4CC9F0;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    .bg-glow { position:fixed; inset:0; z-index:0; pointer-events:none;
+      background: radial-gradient(ellipse 60% 50% at 20% 0%, rgba(76,201,240,0.1) 0%, transparent 55%); }
+
+    /* NAV */
+    nav { position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between;
+      padding:1rem 2.5rem; background:rgba(13,13,13,.92); backdrop-filter:blur(14px);
+      border-bottom:1px solid var(--border); }
+    .logo { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; color:var(--blue); }
+    .logo span { color:var(--text); }
+    
+    .nav-right { display:flex; align-items:center; gap:1rem; }
+    .status-pill { padding:.4rem 1rem; border-radius:100px; font-size:.8rem; font-weight:600;
+      background:rgba(6,214,160,.15); color:var(--green); border:1px solid rgba(6,214,160,.3); }
+    
+    .nav-link { background:transparent; border:1px solid var(--border); color:var(--muted);
+      padding:.5rem 1rem; border-radius:100px; cursor:pointer; font-size:.85rem; text-decoration:none; transition: .2s; }
+    .nav-link:hover { border-color:var(--blue); color:var(--blue); }
+    .logout-link { border-color: rgba(239,35,60,0.3); color: var(--red); }
+    .logout-link:hover { background: rgba(239,35,60,0.1); border-color: var(--red); color: var(--red); }
+
+    .page { position:relative; z-index:1; max-width:900px; margin:0 auto; padding:2rem 1.5rem; }
+
+    /* HERO & PANELS (Keeping your styles) */
+    .hero {
+      background: linear-gradient(135deg, #050f18 0%, #0a1a28 100%);
+      border: 1px solid rgba(76,201,240,.2);
+      border-radius: 20px; padding: 2rem 2.5rem; margin-bottom: 2rem;
+      display: flex; align-items: center; justify-content: space-between;
+    }
+    .hero-text h2 span { color:var(--blue); }
+    .hero-icon { font-size:3.5rem; }
+
+    .fetch-panel { background:var(--card); border:1px solid var(--border); border-radius:18px; padding:1.8rem; margin-bottom:2rem; }
+    .fetch-row { display:flex; gap:1rem; flex-wrap:wrap; align-items:flex-end; }
+    .fetch-row input { flex:1; min-width:180px; padding:.7rem 1rem; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); outline:none; }
+    .btn-blue { background:var(--blue); color:#000; padding:.7rem 1.5rem; border-radius:10px; border:none; font-weight:600; cursor:pointer; }
+
+    .order-card { background:var(--card); border:1px solid var(--border); border-radius:16px; padding:1.5rem; margin-bottom:1.2rem; }
+    .status-badge { display:inline-flex; padding:.3rem .8rem; border-radius:100px; font-size:.75rem; font-weight:600; }
+    .status-PLACED { background:rgba(255,209,102,0.1); color:var(--yellow); }
+    .status-OUT_FOR_DELIVERY { background:rgba(76,201,240,0.1); color:var(--blue); }
+    .status-DELIVERED { background:rgba(6,214,160,0.1); color:var(--green); }
+
+    .deliver-btn { padding:.6rem 1.4rem; background:var(--green); color:#000; border:none; border-radius:9px; font-weight:700; cursor:pointer; }
+    .deliver-btn:disabled { opacity:.4; cursor:not-allowed; }
+
+    .msg { padding:.7rem 1rem; border-radius:9px; font-size:.82rem; margin-top:0.5rem; }
+    .msg.success { background:rgba(6,214,160,.12); color:var(--green); }
+    .msg.error { background:rgba(239,35,60,.12); color:var(--red); }
+    .hidden { display:none !important; }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <nav>
+    <div class="logo">Swiggy <span>Clone</span> 🛵</div>
+    <div class="nav-right">
+      <div class="status-pill">● Online</div>
+      <a href="/Admin" class="nav-link">🛡️ Admin</a>
+      <button onclick="logout()" class="nav-link logout-link">🚪 Logout</button>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="hero">
+      <div class="hero-text">
+        <h2>Delivery <span>Partner</span> Hub</h2>
+        <p>Manage your assigned tasks and update delivery status.</p>
+      </div>
+      <div class="hero-icon">🛵</div>
+    </div>
+
+    <div class="fetch-panel">
+      <h3>📦 Load My Orders</h3>
+      <div class="fetch-row">
+        <input type="number" id="partner-id" placeholder="Your Partner ID (e.g. 2)"/>
+        <button class="btn-blue" onclick="loadOrders()">Load Orders →</button>
+      </div>
+      <div id="fetch-msg" class="msg hidden"></div>
+    </div>
+
+    <div id="orders-section"></div>
+  </div>
+
+  <script>
+    const BASE = 'http://localhost:8080/admin';
+
+    function logout() {
+        localStorage.removeItem('isLoggedIn');
+        window.location.href = '/Home';
+    }
+
+    async function loadOrders() {
+      const pid = document.getElementById('partner-id').value;
+      if (!pid) return showMsg('fetch-msg','Enter Partner ID','error');
+      
+      const container = document.getElementById('orders-section');
+      container.innerHTML = '<p style="text-align:center">Fetching...</p>';
+      
+      try {
+        const res = await fetch(`${BASE}/orders`); 
+        const allOrders = await res.json();
+        const myOrders = allOrders.filter(o => o.deliveryPartner?.id == pid);
+        renderOrders(myOrders);
+      } catch(e) {
+        container.innerHTML = '<p>Server Error</p>';
+      }
+    }
+
+    function renderOrders(orders) {
+      const container = document.getElementById('orders-section');
+      if (!orders.length) {
+        container.innerHTML = '<p style="text-align:center; color:var(--muted)">No orders assigned.</p>';
+        return;
+      }
+      container.innerHTML = orders.map(o => `
+        <div class="order-card" id="order-${o.id}">
+          <div style="display:flex; justify-content:space-between; margin-bottom:1rem;">
+            <div style="font-weight:bold">Order #${o.id}</div>
+            <div class="status-badge status-${o.status}">${o.status}</div>
+          </div>
+          <p style="font-size:0.9rem; margin-bottom:1rem">👤 Customer ID: ${o.customer?.id || 'N/A'}</p>
+          <div style="border-top:1px solid var(--border); padding-top:1rem; display:flex; justify-content:space-between; align-items:center;">
+             <div id="del-msg-${o.id}" class="msg hidden"></div>
+             <button class="deliver-btn" id="del-btn-${o.id}" 
+               onclick="markDelivered(${o.id})" 
+               ${o.status !== 'OUT_FOR_DELIVERY' ? 'disabled' : ''}>
+               ${o.status === 'DELIVERED' ? '✅ Completed' : '🏁 Mark Delivered'}
+             </button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    async function markDelivered(orderId) {
+      const btn = document.getElementById(`del-btn-${orderId}`);
+      btn.disabled = true;
+      try {
+        const res = await fetch(`${BASE}/complete/${orderId}`, { method: 'PUT' });
+        if (res.ok) {
+          loadOrders(); // Refresh status
+        }
+      } catch(e) { 
+        btn.disabled = false;
+        alert("Update failed"); 
+      }
+    }
+
+    function showMsg(id, text, type) {
+      const el = document.getElementById(id);
+      el.textContent = text; el.className = `msg ${type}`;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 4000);
+    }
+  </script>
+</body>
+</html>

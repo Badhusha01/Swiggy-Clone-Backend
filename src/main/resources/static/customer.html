@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Customer — SwiggyClone</title>
+  
+  <script>
+    if (localStorage.getItem('isLoggedIn') !== 'true') {
+        alert("Authentication Required: Please log in to access the dashboard");
+        window.location.href = '/Home'; 
+    }
+  </script>
+
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  
+  <style>
+    :root {
+      --orange: #FF6B35; --orange-dark: #e85520; --yellow: #FFD166;
+      --bg: #0d0d0d; --card: #161616; --border: #252525;
+      --text: #f0f0f0; --muted: #777; --green: #06D6A0; --red: #EF233C;
+    }
+    * { margin:0; padding:0; box-sizing:border-box; }
+    body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); min-height:100vh; }
+
+    .bg-glow { position:fixed; inset:0; z-index:0; pointer-events:none;
+      background: radial-gradient(ellipse 70% 50% at 80% 0%, rgba(255,107,53,0.13) 0%, transparent 60%); }
+
+    /* NAV */
+    nav { position:sticky; top:0; z-index:100; display:flex; align-items:center; justify-content:space-between;
+      padding:1rem 2.5rem; background:rgba(13,13,13,0.92); backdrop-filter:blur(14px);
+      border-bottom:1px solid var(--border); }
+    .logo { font-family:'Syne',sans-serif; font-size:1.3rem; font-weight:800; color:var(--orange); }
+    .logo span { color:var(--text); }
+    .nav-right { display:flex; align-items:center; gap:1rem; }
+    
+    .cart-btn {
+      position:relative; padding:.5rem 1.2rem; background:var(--orange); color:white;
+      border:none; border-radius:100px; cursor:pointer; font-family:'DM Sans',sans-serif;
+      font-size:.88rem; font-weight:500; display:flex; align-items:center; gap:.5rem;
+    }
+    .cart-count { background:white; color:var(--orange); border-radius:50%; width:18px; height:18px;
+      font-size:.7rem; font-weight:700; display:flex; align-items:center; justify-content:center; }
+    
+    .nav-link { background:transparent; border:1px solid var(--border); color:var(--muted);
+      padding:.5rem 1rem; border-radius:100px; cursor:pointer; font-size:.85rem; text-decoration:none; transition: .2s; }
+    .nav-link:hover { border-color:var(--orange); color:var(--orange); }
+    .logout-link { border-color: rgba(239,35,60,0.3); color: var(--red); }
+    .logout-link:hover { background: rgba(239,35,60,0.1); border-color: var(--red); color: var(--red); }
+
+    /* Page Content & Grid (Keeping your styles) */
+    .page { position:relative; z-index:1; max-width:1100px; margin:0 auto; padding:2rem 1.5rem; }
+    .hero-banner {
+      background: linear-gradient(135deg, #1a0a00 0%, #2a1200 50%, #1a0a00 100%);
+      border: 1px solid rgba(255,107,53,.25);
+      border-radius: 20px; padding: 2.5rem; margin-bottom: 2.5rem;
+      display: flex; align-items: center; gap: 2rem; position: relative; overflow: hidden;
+    }
+    .hero-text h2 { font-family:'Syne',sans-serif; font-size:1.8rem; font-weight:800; }
+    .hero-text h2 span { color:var(--orange); }
+    .hero-text p { color:var(--muted); margin-top:.4rem; font-size:.92rem; }
+    .hero-icon { font-size:4rem; }
+
+    .search-bar { display:flex; gap:.8rem; margin-bottom:2rem; }
+    .search-bar input {
+      flex:1; padding:.75rem 1.2rem; border-radius:12px;
+      border:1px solid var(--border); background:var(--card);
+      color:var(--text); font-size:.92rem; outline:none;
+    }
+    .btn-fetch { padding:.75rem 1.5rem; background:var(--orange); color:white; border:none;
+      border-radius:12px; font-weight:600; cursor:pointer; font-family:'Syne',sans-serif; }
+
+    .food-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(240px,1fr)); gap:1.2rem; margin-bottom:2.5rem; }
+    .food-card {
+      background:var(--card); border:1px solid var(--border);
+      border-radius:16px; padding:1.2rem; cursor:pointer; transition:all .2s; position:relative;
+    }
+    .food-card:hover { border-color:var(--orange); transform:translateY(-3px); }
+    .food-card.selected { border-color:var(--orange); background:rgba(255,107,53,.07); }
+    .food-emoji { font-size:2.5rem; margin-bottom:.8rem; display:block; }
+    .food-price { font-size:1.1rem; font-weight:700; color:var(--orange); }
+    
+    .food-check {
+      position:absolute; top:.8rem; right:.8rem; width:22px; height:22px; border-radius:50%;
+      background:var(--orange); color:white; display:none; align-items:center; justify-content:center;
+    }
+    .food-card.selected .food-check { display:flex; }
+
+    .order-panel { background:var(--card); border:1px solid var(--border); border-radius:20px; padding:1.8rem; }
+    .order-row { display:flex; gap:1rem; flex-wrap:wrap; }
+    .order-row input { padding:.7rem 1rem; border-radius:10px; border:1px solid var(--border); background:var(--bg); color:var(--text); flex:1; }
+    .btn-order { padding:.7rem 1.8rem; background:var(--orange); color:white; border:none; border-radius:10px; font-weight:600; cursor:pointer; }
+
+    .msg { padding:.8rem 1rem; border-radius:10px; font-size:.85rem; margin-top:1rem; }
+    .msg.success { background:rgba(6,214,160,0.1); color:var(--green); }
+    .msg.error { background:rgba(239,35,60,0.1); color:var(--red); }
+    .hidden { display:none !important; }
+
+    .sel-bar { background:rgba(255,107,53,.12); border:1px solid rgba(255,107,53,.3); border-radius:12px; padding:.8rem 1.2rem; margin-bottom:1rem; color:var(--orange); display:flex; justify-content:space-between; }
+  </style>
+</head>
+<body>
+  <div class="bg-glow"></div>
+  <nav>
+    <div class="logo">Swiggy <span>Clone</span></div>
+    <div class="nav-right">
+      <a href="/Admin" class="nav-link">🛡️ Admin</a>
+      <button class="cart-btn" onclick="scrollToOrder()">🛒 Cart <span class="cart-count" id="cart-count">0</span></button>
+      <button onclick="logout()" class="nav-link logout-link">🚪 Logout</button>
+    </div>
+  </nav>
+
+  <div class="page">
+    <div class="hero-banner">
+      <div class="hero-text">
+        <h2>Hungry? <span>Order Now</span></h2>
+        <p>Pick your favorites and we'll handle the rest.</p>
+      </div>
+      <div class="hero-icon">🍕</div>
+    </div>
+
+    <div class="search-bar">
+      <input type="text" id="search-input" placeholder="Search for food..." oninput="filterFoods()"/>
+      <button class="btn-fetch" onclick="loadFoods()">🔄 Refresh</button>
+    </div>
+
+    <div id="sel-bar" class="sel-bar hidden">
+      <span id="sel-text">0 items selected</span>
+      <span style="cursor:pointer" onclick="clearSelection()">✕ Clear</span>
+    </div>
+
+    <div class="food-grid" id="food-grid">
+      <div class="loader">Loading menu...</div>
+    </div>
+
+    <div class="order-panel" id="order-panel">
+      <h3>📦 Place Your Order</h3>
+      <div class="order-row">
+        <input type="number" id="customer-id" placeholder="Your Customer ID"/>
+        <button class="btn-order" id="order-btn" onclick="placeOrder()">Place Order →</button>
+      </div>
+      <div id="order-msg" class="msg hidden"></div>
+    </div>
+  </div>
+
+  <script>
+    const BASE = 'http://localhost:8080/customer';
+    let allFoods = [];
+    let selectedIds = [];
+    const foodEmojis = ['🍔','🍕','🌮','🍜','🍛','🥗','🍱','🌯','🍣','🍗','🥘','🍝'];
+
+    function logout() {
+        localStorage.removeItem('isLoggedIn');
+        window.location.href = '/Home';
+    }
+
+    async function loadFoods() {
+      try {
+        const res = await fetch(`${BASE}/foods`);
+        allFoods = await res.json();
+        renderFoods(allFoods);
+      } catch(e) {
+        document.getElementById('food-grid').innerHTML = '<p>Server disconnected.</p>';
+      }
+    }
+
+    function renderFoods(foods) {
+      document.getElementById('food-grid').innerHTML = foods.map((f, i) => `
+        <div class="food-card ${selectedIds.includes(f.id) ? 'selected' : ''}" onclick="toggleSelect(${f.id})" id="fc-${f.id}">
+          <div class="food-check">✓</div>
+          <span class="food-emoji">${foodEmojis[i % foodEmojis.length]}</span>
+          <div class="food-name">${f.name}</div>
+          <div class="food-rest">🏠 ${f.resuturant?.name || 'Restaurant'}</div>
+          <div class="food-price">₹${f.price.toFixed(2)}</div>
+        </div>`).join('');
+    }
+
+    function toggleSelect(id) {
+      const idx = selectedIds.indexOf(id);
+      if (idx > -1) selectedIds.splice(idx, 1);
+      else selectedIds.push(id);
+      updateUI();
+    }
+
+    function updateUI() {
+      document.getElementById('cart-count').textContent = selectedIds.length;
+      const bar = document.getElementById('sel-bar');
+      if (selectedIds.length > 0) {
+        bar.classList.remove('hidden');
+        document.getElementById('sel-text').textContent = `${selectedIds.length} items selected`;
+      } else {
+        bar.classList.add('hidden');
+      }
+      renderFoods(allFoods);
+    }
+
+    function clearSelection() { selectedIds = []; updateUI(); }
+    function scrollToOrder() { document.getElementById('order-panel').scrollIntoView({behavior:'smooth'}); }
+
+    async function placeOrder() {
+      const cid = document.getElementById('customer-id').value;
+      if (!cid || !selectedIds.length) return showMsg('order-msg','Select food & enter ID','error');
+      try {
+        const res = await fetch(`${BASE}/order/${cid}`, {
+          method:'POST', headers:{'Content-Type':'application/json'},
+          body: JSON.stringify(selectedIds)
+        });
+        if (res.ok) {
+          showMsg('order-msg', '✅ Order placed successfully!', 'success');
+          clearSelection();
+        }
+      } catch(e) { showMsg('order-msg','Order failed','error'); }
+    }
+
+    function showMsg(id, msg, type) {
+      const el = document.getElementById(id);
+      el.textContent = msg; el.className = `msg ${type}`;
+      el.classList.remove('hidden');
+      setTimeout(() => el.classList.add('hidden'), 4000);
+    }
+
+    loadFoods();
+  </script>
+</body>
+</html>

@@ -14,7 +14,7 @@ import com.example.demowithswiggy.model.*;
 import java.util.List;
 import com.example.demowithswiggy.dao.*;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*", allowedHeaders = "*")
 @RestController
 @RequestMapping("/admin")
 public class AdminController {

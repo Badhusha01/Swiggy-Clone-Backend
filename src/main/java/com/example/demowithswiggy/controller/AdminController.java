@@ -95,26 +95,59 @@ public class AdminController {
                 .toList();
     }
     
-    @PostMapping("/order")
-    public FoodOrder placeOrder(@RequestBody java.util.Map<String, String> request) {
-        String email = request.get("customerEmail");
-        Long foodId = Long.parseLong(request.get("foodId"));
-        // 1. Find Customer by Email
-        User customer = ur.findAll().stream()
-                .filter(u -> u.getEmail().equals(email))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Email not found: " + email));
+    @PostMapping(value = "/order", consumes = "application/json", produces = "application/json")
+    public FoodOrder placeOrder(@RequestBody java.util.Map<String, Object> request) {
+        System.out.println("--- Inside placeOrder backend endpoint! ---");
+        
+        String email = (String) request.get("customerEmail");
+        Object foodIdObj = request.get("foodId");
+        
+        if (email == null || foodIdObj == null) {
+            throw new RuntimeException("Required fields missing in payload!");
+        }
 
-        // 2. Find Food and Restaurant
-        FoodItem food = fir.findById(foodId).get();
+        Long foodId = Long.parseLong(foodIdObj.toString());
+
+        // 🔥 இமெயில் இல்லைனா ஆட்டோமேட்டிக்கா புது கஸ்டமரை கிரியேட் பண்ணும் லாஜிக்
+        User customer = ur.findAll().stream()
+                .filter(u -> u.getEmail() != null && u.getEmail().equalsIgnoreCase(email.trim()))
+                .findFirst()
+                .orElseGet(() -> {
+                    System.out.println("User not found! Creating temporary customer for: " + email);
+                    User newUser = new User();
+                    
+                    // இமெயில்ல இருக்குற பேரை மட்டும் பிரிச்சு எடுத்து முதல் எழுத்தை Capital ஆக்கும் (உம்: ajith@swiggy.com -> Ajith)
+                    String nameFromEmail = email.split("@")[0];
+                    String capitalizedName = nameFromEmail.substring(0, 1).toUpperCase() + nameFromEmail.substring(1);
+                    
+                    newUser.setName(capitalizedName);
+                    newUser.setEmail(email.trim());
+                    newUser.setPassword(passwordEncoder().encode("1234")); // Default password
+                    
+                    // 🔥 இப்போ எரர் அடிக்காது மாப்ள, கரெக்ட்டா உன்னோட Role enum-ஐ செட் பண்ணியாச்சு!
+                    newUser.setRole(com.example.demowithswiggy.model.Role.CUSTOMER); 
+                    
+                    return ur.save(newUser);
+                });
+
+        // 2. Find Food Item safely
+        FoodItem food = fir.findById(foodId)
+                .orElseThrow(() -> new RuntimeException("Food Item not found with ID: " + foodId));
+                
         // 3. Create New Order
         FoodOrder newOrder = new FoodOrder();
         newOrder.setCustomer(customer);
-        newOrder.setItems(java.util.List.of(food)); // Single food order
-        newOrder.setStatus(OrderStatus.PLACED);
-        // Un model-la restaurant field irundha mattum idha vai:
-        // newOrder.setRestaurant(rest); 
+        newOrder.setItems(java.util.List.of(food));
+        
+        // 🔥 உன்னோட OrderStatus-ஐயும் பக்காவா செட் பண்ணியாச்சு!
+        newOrder.setStatus(com.example.demowithswiggy.model.OrderStatus.PLACED);
 
+        System.out.println("--- Saving Order to Database! ---");
         return foor.save(newOrder);
     }
+    
+	private PasswordEncoder passwordEncoder() {
+		// TODO Auto-generated method stub
+		return null;
+	}
 }

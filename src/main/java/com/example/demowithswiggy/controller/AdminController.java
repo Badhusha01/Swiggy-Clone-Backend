@@ -14,26 +14,30 @@ import com.example.demowithswiggy.model.*;
 import java.util.List;
 import com.example.demowithswiggy.dao.*;
 
-@CrossOrigin(origins = "*", allowedHeaders = "*")
+// 🔥 '*' தூக்கிட்டு, செக்யூரிட்டி ஃபைலுக்கு ஏத்த மாதிரி வெர்சல் மற்றும் லோக்கல்ஹோஸ்ட்டை மட்டும் அலோவ் பண்றோம்!
+@CrossOrigin(origins = {"http://localhost:5173", "https://swiggy-clone-frontend-six.vercel.app"}, allowedHeaders = "*", allowCredentials = "true")
 @RestController
 @RequestMapping("/admin")
 public class AdminController {
+
     @Autowired
-	RestaurantRepo rr;
+    RestaurantRepo rr;
     @Autowired
-	UserRepo ur;
+    UserRepo ur;
     @Autowired
-	FoodItemRepo fir;
+    FoodItemRepo fir;
     @Autowired
-	FoodOrderRepo foor;
+    FoodOrderRepo foor;
+    
+    // 🔥 இதுதான் மெயின் என்கோடர் Bean!
     @Autowired
     private PasswordEncoder passwordEncoder;
-	
     
     @PostMapping("/restaurant")
     public Resuturant get1(@RequestBody Resuturant r) {
         return rr.save(r);
     }
+
     @PostMapping("/food")
     public FoodItem get2(@RequestBody FoodItem f) {
         return fir.save(f);
@@ -44,7 +48,7 @@ public class AdminController {
             @PathVariable Long orderId, 
             @PathVariable Long partnerId) { 
 
-    	FoodOrder order = foor.findById(orderId)
+        FoodOrder order = foor.findById(orderId)
             .orElseThrow(() -> new RuntimeException("Order not found with ID: " + orderId));
         
         User partner = ur.findById(partnerId)
@@ -58,9 +62,10 @@ public class AdminController {
 
     @PostMapping("/user")
     public User addUser1(@RequestBody User u) {
-    	u.setPassword(passwordEncoder.encode(u.getPassword()));
+        u.setPassword(passwordEncoder.encode(u.getPassword()));
         return ur.save(u);
     }
+
     @GetMapping("/orders")
     public List<FoodOrder> getAllOrders() {
         return foor.findAll();
@@ -83,7 +88,7 @@ public class AdminController {
 
     @GetMapping("/foods")
     public List<FoodItem> getFood() {
-        System.out.println("--- Foods fetch request received! ---"); // Console check-ku
+        System.out.println("--- Foods fetch request received! ---"); 
         return fir.findAll();
     }
     
@@ -108,7 +113,6 @@ public class AdminController {
 
         Long foodId = Long.parseLong(foodIdObj.toString());
 
-        // 🔥 இமெயில் இல்லைனா ஆட்டோமேட்டிக்கா புது கஸ்டமரை கிரியேட் பண்ணும் லாஜிக்
         User customer = ur.findAll().stream()
                 .filter(u -> u.getEmail() != null && u.getEmail().equalsIgnoreCase(email.trim()))
                 .findFirst()
@@ -116,15 +120,15 @@ public class AdminController {
                     System.out.println("User not found! Creating temporary customer for: " + email);
                     User newUser = new User();
                     
-                    // இமெயில்ல இருக்குற பேரை மட்டும் பிரிச்சு எடுத்து முதல் எழுத்தை Capital ஆக்கும் (உம்: ajith@swiggy.com -> Ajith)
                     String nameFromEmail = email.split("@")[0];
                     String capitalizedName = nameFromEmail.substring(0, 1).toUpperCase() + nameFromEmail.substring(1);
                     
                     newUser.setName(capitalizedName);
                     newUser.setEmail(email.trim());
-                    newUser.setPassword(passwordEncoder().encode("1234")); // Default password
                     
-                    // 🔥 இப்போ எரர் அடிக்காது மாப்ள, கரெக்ட்டா உன்னோட Role enum-ஐ செட் பண்ணியாச்சு!
+                    // 🔥 இப்போ மேல இருக்குற ஸ்பிரிங் 'passwordEncoder' பீனை கரெக்ட்டா கூப்பிடும், 'null' எரர் வராது!
+                    newUser.setPassword(passwordEncoder.encode("1234")); 
+                    
                     newUser.setRole(com.example.demowithswiggy.model.Role.CUSTOMER); 
                     
                     return ur.save(newUser);
@@ -139,15 +143,11 @@ public class AdminController {
         newOrder.setCustomer(customer);
         newOrder.setItems(java.util.List.of(food));
         
-        // 🔥 உன்னோட OrderStatus-ஐயும் பக்காவா செட் பண்ணியாச்சு!
         newOrder.setStatus(com.example.demowithswiggy.model.OrderStatus.PLACED);
 
         System.out.println("--- Saving Order to Database! ---");
         return foor.save(newOrder);
     }
     
-	private PasswordEncoder passwordEncoder() {
-		// TODO Auto-generated method stub
-		return null;
-	}
+    // ❌ அந்த பழைய 'private PasswordEncoder passwordEncoder()' மெத்தடை அப்படியே தூக்கியாச்சு மாப்ள!
 }

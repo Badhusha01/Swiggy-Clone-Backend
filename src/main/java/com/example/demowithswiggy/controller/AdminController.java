@@ -14,7 +14,6 @@ import com.example.demowithswiggy.model.*;
 import java.util.List;
 import com.example.demowithswiggy.dao.*;
 
-// 🔥 '*' தூக்கிட்டு, செக்யூரிட்டி ஃபைலுக்கு ஏத்த மாதிரி வெர்சல் மற்றும் லோக்கல்ஹோஸ்ட்டை மட்டும் அலோவ் பண்றோம்!
 @CrossOrigin(origins = {"http://localhost:5173", "https://swiggy-clone-frontend-six.vercel.app"}, allowedHeaders = "*", allowCredentials = "true")
 @RestController
 @RequestMapping("/admin")

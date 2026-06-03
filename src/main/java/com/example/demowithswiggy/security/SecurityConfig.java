@@ -20,7 +20,7 @@ public class SecurityConfig {
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
             .csrf(csrf -> csrf.disable()) 
-            // 🔥 Explicit Configuration source-ah map panrom default-ku badhula
+            // 🔥 Explicit Configuration source-ah மாப் பண்றோம்
             .cors(cors -> cors.configurationSource(corsConfigurationSource()))         
             .authorizeHttpRequests(auth -> auth
                 .anyRequest().permitAll() 
@@ -28,13 +28,21 @@ public class SecurityConfig {
         return http.build();
     }
     
-    // 🔥 Global Universal CORS configuration filter block mapla
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-        configuration.setAllowedOrigins(List.of("*")); // Allows localhost & Render apps smoothly
+        
+        // 🔥 ' * ' போடுறதுக்கு பதிலா உன்னோட லோக்கல் மற்றும் லைவ் வெர்சல் URL-ஐ ஸ்ட்ரெயிட்டா அலோவ் பண்றோம் மாப்ள!
+        configuration.setAllowedOrigins(List.of(
+            "http://localhost:5173",
+            "https://swiggy-clone-frontend-six.vercel.app"
+        )); 
+        
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
+        
+        // 🔥 இந்த லைன் தான் ரொம்ப முக்கியம்! பிரண்ட்எண்ட் டோக்கன்/க்ரெடென்ஷியல்ஸ் பாஸ் பண்ணா இது ட்ரூவா இருக்கணும்!
+        configuration.setAllowCredentials(true); 
         
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
